@@ -1,0 +1,26 @@
+{
+    "name": "jstormes/db-tool",
+    "description": "Tool to build databases and set permissions",
+    "type": "library",
+    "license": "GPL 3",
+    "authors": [
+        {
+            "name": "James Stormes",
+            "email": "jstormes@stormes.net"
+        }
+    ],
+    "require": {
+        "php": "^7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "JStormes\\dbTool\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JStormes\\Dev\\": "test/"
+        }
+    },
+    "bin": ["src/bin/db-tool"]
+}

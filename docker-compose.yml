@@ -1,0 +1,48 @@
+version: '3'
+
+############################################################################
+# Docker compose for local development
+#
+# Time Zones:
+#    America/Los_Angeles  # PST
+#    America/Denver       # MST
+#    America/Chicago      # CST
+#    America/New_York     # EST
+
+
+####### OAuth2 Authorization Server ########
+services:
+  db-tools:
+    build: .
+    environment:
+      - TZ=America/Chicago
+      - DB=mysql://auth:naked@db:3306/auth
+      - HISTORY_DB=mysql://auth:naked@db:3306/auth_history
+      - XDEBUG_CONFIG="remote_host=host.docker.internal remote_port=9000 remote_autostart=1"
+      - PHP_IDE_CONFIG=serverName=docker-cli
+      - PMA_USER=root          # Do Not set this in production, for self db creation only !!!!
+      - PMA_PASSWORD=AhEP2678  # Do Not set this in production, for self db creation only !!!!
+    ports:
+      - 9080:80
+    volumes:
+      - ./bin:/root/bin        # Allow the master git project to interact with Docker container
+      - ./:/var/www            # Override the web root
+
+
+####### Maria DB ########
+  db:
+    image: mariadb
+    environment:
+      - TZ=America/Chicago
+      - MYSQL_ROOT_PASSWORD=AhEP2678
+    ports:
+      - 5000:3306
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - TZ=America/Chicago
+      - PMA_USER=root
+      - PMA_PASSWORD=AhEP2678
+    ports:
+      - 9082:80
+

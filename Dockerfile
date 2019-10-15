@@ -30,7 +30,7 @@ RUN apt-get install -y inetutils-ping iproute2 \
           ping -c 1 -W 1 "host.docker.internal"; \
         fi
 
-ENV PATH /var/www/vendor/bin:/var/www/bin:/root/bin:root/.composer/vendor/bin:$PATH
+ENV PATH /var/www:/var/www/vendor/bin:/var/www/bin:/root/bin:root/.composer/vendor/bin:$PATH
 
 WORKDIR /var/www
 

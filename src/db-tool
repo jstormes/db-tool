@@ -1,13 +1,5 @@
 #!/usr/bin/env php
 <?php
-/*
- * This file is part of PHPUnit.
- *
- * (c) Sebastian Bergmann <sebastian@phpunit.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 if (version_compare('7.1.0', PHP_VERSION, '>')) {
     fwrite(
@@ -27,7 +19,7 @@ if (!ini_get('date.timezone')) {
     ini_set('date.timezone', 'UTC');
 }
 
-foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php') as $file) {
+foreach (array(__DIR__ . '/../../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php') as $file) {
     if (file_exists($file)) {
         define('PHPUNIT_COMPOSER_INSTALL', $file);
 

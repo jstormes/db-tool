@@ -23,7 +23,7 @@ services:
       - PMA_USER=root          # Do Not set this in production, for self db creation only !!!!
       - PMA_PASSWORD=AhEP2678  # Do Not set this in production, for self db creation only !!!!
     ports:
-      - 9080:80
+      - 8080:80
     volumes:
       - ./bin:/root/bin        # Allow the master git project to interact with Docker container
       - ./:/var/www            # Override the web root

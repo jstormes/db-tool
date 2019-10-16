@@ -5,7 +5,7 @@ FROM php:7
 # Install requried libraries, should be the same across dev, QA, etc...
 ############################################################################
 RUN apt-get -y update \
-    && apt-get install -y curl zip unzip libzip-dev \
+    && apt-get install -y curl zip unzip libzip-dev inetutils-ping iproute2 \
     && docker-php-ext-install zip pdo pdo_mysql
 
 RUN apt-get install -y wget git \
@@ -23,15 +23,11 @@ RUN yes | pecl install xdebug \
     && echo "xdebug.idekey=default-docker" >> /usr/local/etc/php/conf.d/xdebug.ini \
     && echo "xdebug.remote_host=host.docker.internal" >> /usr/local/etc/php/conf.d/xdebug.ini
 
-RUN apt-get install -y inetutils-ping iproute2 \
-    &&  if ! ping -c 1 -W 1 "host.docker.internal"; then \
-          echo "Adding host host.docker.internal"; \
-          ip -4 route list match 0/0 | awk '{print $3 " host.docker.internal"}' >> /etc/hosts; \
-          ping -c 1 -W 1 "host.docker.internal"; \
-        fi
+COPY bin/DockerStartUp.sh /root/bin/DockerStartUp.sh
+RUN chmod a+x /root/bin/DockerStartUp.sh
 
-ENV PATH /var/www:/var/www/vendor/bin:/var/www/bin:/root/bin:root/.composer/vendor/bin:$PATH
+ENV PATH /var/www/src:/var/www/vendor/bin:/var/www/bin:/root/bin:root/.composer/vendor/bin:$PATH
 
 WORKDIR /var/www
 
-CMD ["php", "-S", "0.0.0.0:80", "-t", ".", ".index.php"]
+CMD ["sh", "/root/bin/DockerStartUp.sh"]

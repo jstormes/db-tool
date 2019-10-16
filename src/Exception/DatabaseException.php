@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JStormes;
+namespace JStormes\dbTool\Exception;
 
 use Exception;
 

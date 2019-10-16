@@ -6,8 +6,9 @@ namespace JStormes\dbTool\Adapter;
 
 use Interop\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Database\Adapter\mysqlDb;
-use Database\Adapter\mariaDb;
+use dbType\mysqlDb;
+use dbType\mariaDb;
+use JStormes\dbTool\Lib\parseDatabaseURL;
 
 
 class AdapterFactory
@@ -27,7 +28,7 @@ class AdapterFactory
 
         switch ($scheme) {
             case "mysql":
-                $adapter = new mysqlDb();
+                $adapter = new \JStormes\dbTool\Adapter\dbType\mysqlDb();
                 break;
             case "maria":
                 $adapter = new mariaDb();

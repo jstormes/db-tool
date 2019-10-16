@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JStormes\dbTool\dbType;
+namespace JStormes\dbTool\Adapter\dbType;
 
-use Database\AdapterInterface;
-use Database\parseDatabaseURL;
-use Database\DatabaseException;
+use JStormes\dbTool\Adapter\AdapterInterface;
+use JStormes\dbTool\Lib\parseDatabaseURL;
+use JStormes\dbTool\Exception\DatabaseException;
 use Exception;
 use PDO;
 

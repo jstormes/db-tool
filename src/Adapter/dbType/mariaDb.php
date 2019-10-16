@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JStormes\dbTool\dbType;
+namespace JStormes\dbTool\Adapter\dbType;
 
 class mariaDb extends mysqlDb
 {

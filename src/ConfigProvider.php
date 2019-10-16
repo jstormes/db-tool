@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JStormes;
+namespace JStormes\dbTool;
 
 
+
+use Psr\Log\LoggerInterface;
 
 /**
  * The configuration provider for the App module
@@ -23,7 +25,8 @@ class ConfigProvider
     public function __invoke() : array
     {
         return [
-            'dependencies' => $this->getDependencies()
+            'dependencies' => $this->getDependencies(),
+            'console' => $this->getConsole()
         ];
     }
 
@@ -36,7 +39,22 @@ class ConfigProvider
             'invokables' => [
             ],
             'factories'  => [
-                AdapterInterface::class => AdapterFactory::class,
+                Adapter\AdapterInterface::class => Adapter\AdapterFactory::class,
+                CommandLine\Command\VerifyDbCommand::class => CommandLine\Command\VerifyDbCommandFactory::class,
+                LoggerInterface::class => Log\Factory\LogFactory::class,
+//                Command\CreateDbCommand::class => Command\CreateDbCommandFactory::class,
+//                Command\CreateHistoryTableCommand::class => Command\CreateHistoryTableCommandFactory::class
+            ],
+        ];
+    }
+
+    public function getConsole() : array
+    {
+        return [
+            'commands' => [
+                CommandLine\Command\VerifyDbCommand::class,
+//                Command\CreateDbCommand::class,
+//                Command\CreateHistoryTableCommand::class
             ],
         ];
     }

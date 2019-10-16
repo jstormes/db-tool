@@ -14,15 +14,15 @@ $cacheConfig = [
 
 $aggregator = new ConfigAggregator([
     \Zend\Log\ConfigProvider::class,
-    \Zend\HttpHandlerRunner\ConfigProvider::class,
-    \Zend\Expressive\Plates\ConfigProvider::class,
-    \Zend\Expressive\Router\FastRouteRouter\ConfigProvider::class,
+//    \Zend\HttpHandlerRunner\ConfigProvider::class,
+//    \Zend\Expressive\Plates\ConfigProvider::class,
+//    \Zend\Expressive\Router\FastRouteRouter\ConfigProvider::class,
     // Include cache configuration
     new ArrayProvider($cacheConfig),
 
-    \Zend\Expressive\Helper\ConfigProvider::class,
-    \Zend\Expressive\ConfigProvider::class,
-    \Zend\Expressive\Router\ConfigProvider::class,
+//    \Zend\Expressive\Helper\ConfigProvider::class,
+//    \Zend\Expressive\ConfigProvider::class,
+//    \Zend\Expressive\Router\ConfigProvider::class,
 
     // Swoole config to overwrite some services (if installed)
     class_exists(\Zend\Expressive\Swoole\ConfigProvider::class)
@@ -30,10 +30,11 @@ $aggregator = new ConfigAggregator([
         : function(){ return[]; },
 
     // Default App module config
-    App\ConfigProvider::class,
-    Log\ConfigProvider::class,
-    Database\ConfigProvider::class,
-    CommandLine\ConfigProvider::class,
+//    App\ConfigProvider::class,
+//    Log\ConfigProvider::class,
+//    Database\ConfigProvider::class,
+//    CommandLine\ConfigProvider::class,
+    JStormes\dbTool\ConfigProvider::class,
 
     // Load application config in a pre-defined order in such a way that local settings
     // overwrite global settings. (Loaded as first to last):

@@ -119,7 +119,7 @@ class mysqlDb implements AdapterInterface
         $query->execute();
     }
 
-    function getDbTables(PDO $pdo, string $databaseName)
+    function getDbTables(PDO $pdo, string $databaseName=null)
     {
         $query = $pdo->prepare("SHOW TABLES");
         $query->execute();

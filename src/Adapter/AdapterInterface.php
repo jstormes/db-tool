@@ -25,7 +25,7 @@ interface AdapterInterface
 
 
 
-    function getDbTables(PDO $pdo, string $databaseName);
+    function getDbTables(PDO $pdo, ?string $databaseName=null);
 
     function dropTable(PDO $pdo, string $databaseName, string $tableName) : void;
 

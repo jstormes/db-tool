@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace JStormes\dbTool\CommandLine\Command;
 
-use Database\AdapterInterface;
-use Database\DatabaseException;
-use Database\parseDatabaseURL;
-use Doctrine\ORM\EntityManager;
+use JStormes\dbTool\Adapter\AdapterFactory;
+use JStormes\dbTool\Adapter\AdapterInterface;
+use JStormes\dbTool\Exception\DatabaseException;
+use JStormes\dbTool\Lib\parseDatabaseURL;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,9 +21,6 @@ class CreateHistoryTableCommand extends Command
 {
     /** @var LoggerInterface  */
     private $logger;
-
-    /** @var EntityManager  */
-    private $entityManager;
 
     /** @var String  */
     private $databaseURL;
@@ -40,26 +37,22 @@ class CreateHistoryTableCommand extends Command
     /**
      * TestDbCommand Constructor.
      * @param LoggerInterface $logger
-     * @param EntityManager $entityManager|null
      * @param String $databaseURL
-     * @param AdapterInterface $databaseAdapter
+     * @param AdapterFactory $databaseAdapterFactory
      * @param string $privilegedDbUser
      * @param string $privilegedDbPassword
      */
     public function __construct(LoggerInterface $logger,
-                                ?EntityManager $entityManager,
                                 String $databaseURL,
-                                AdapterInterface $databaseAdapter,
+                                AdapterFactory $databaseAdapterFactory,
                                 string $privilegedDbUser = '',
                                 string $privilegedDbPassword = '')
     {
         $this->logger = $logger;
 
-        $this->entityManager = $entityManager;
-
         $this->databaseURL = $databaseURL;
 
-        $this->databaseAdapter = $databaseAdapter;
+        $this->databaseAdapter = $databaseAdapterFactory;
 
         $this->privilegedDbUser = $privilegedDbUser;
 
@@ -101,6 +94,7 @@ class CreateHistoryTableCommand extends Command
             }
 
 
+            /** @var PDO $pdo */
             $pdo = $this->databaseAdapter->connectToHost(
                 $urlParser->getDbScheme($this->databaseURL),
                 $urlParser->getDbHost($this->databaseURL),

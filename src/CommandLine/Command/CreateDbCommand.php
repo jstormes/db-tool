@@ -4,30 +4,27 @@ declare(strict_types=1);
 
 namespace JStormes\dbTool\CommandLine\Command;
 
-use Database\AdapterInterface;
-use Database\parseDatabaseURL;
-use Doctrine\ORM\EntityManager;
+use JStormes\dbTool\Adapter\AdapterFactory;
+use JStormes\dbTool\Adapter\AdapterInterface;
+use JStormes\dbTool\Exception\DatabaseException;
+use JStormes\dbTool\Lib\parseDatabaseURL;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use PDO;
 use Exception;
 use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Input\InputOption;
 
 class CreateDbCommand extends Command
 {
     /** @var LoggerInterface  */
     private $logger;
 
-    /** @var EntityManager  */
-    private $entityManager;
-
-    /** @var String  */
-    private $databaseURL;
-
-    /** @var AdapterInterface  */
-    private $databaseAdapter;
+    /** @var AdapterFactory  */
+    private $databaseAdapterFactory;
 
     /** @var string */
     private $privilegedDbUser;
@@ -38,26 +35,18 @@ class CreateDbCommand extends Command
     /**
      * TestDbCommand Constructor.
      * @param LoggerInterface $logger
-     * @param EntityManager $entityManager|null
-     * @param String $databaseURL
-     * @param AdapterInterface $databaseAdapter
+     * @param AdapterFactory $databaseAdapterFactory
      * @param string $privilegedDbUser
      * @param string $privilegedDbPassword
      */
     public function __construct(LoggerInterface $logger,
-                                ?EntityManager $entityManager,
-                                String $databaseURL,
-                                AdapterInterface $databaseAdapter,
+                                AdapterFactory $databaseAdapterFactory,
                                 string $privilegedDbUser,
                                 string $privilegedDbPassword)
     {
         $this->logger = $logger;
 
-        $this->entityManager = $entityManager;
-
-        $this->databaseURL = $databaseURL;
-
-        $this->databaseAdapter = $databaseAdapter;
+        $this->databaseAdapterFactory = $databaseAdapterFactory;
 
         $this->privilegedDbUser = $privilegedDbUser;
 
@@ -67,12 +56,21 @@ class CreateDbCommand extends Command
     }
 
     /**
-     * Configures the command
+     * Configures the command line
      */
     protected function configure()
     {
         $this->setName('create-db')
             ->setDescription('Create Database');
+
+        $this->addArgument('database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with Database URL');
+        $this->addOption(
+            'permissions',
+            'p',
+            InputOption::VALUE_OPTIONAL,
+            'access type (application | history)',
+            'application'
+        );
     }
 
     /**
@@ -84,9 +82,21 @@ class CreateDbCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            $output->writeln("Creating Database  ...");
+
+            $databaseUrl = $input->getArgument('database_url');
+
+            if (!(empty(getenv($databaseUrl)))) {
+                $databaseUrl = getenv($databaseUrl);
+            }
 
             $urlParser = new parseDatabaseURL();
+
+            $databaseName = $urlParser->getDbName($databaseUrl);
+
+            $output->writeln("Creating Database '$databaseName' ...");
+
+            /** @var AdapterInterface $databaseAdapter */
+            $databaseAdapter = $this->databaseAdapterFactory->getAdapter($databaseUrl);
 
             if ((empty($this->privilegedDbUser))&&(empty($this->privilegedDbPassword))) {
                 $helper = $this->getHelper('question');
@@ -97,27 +107,30 @@ class CreateDbCommand extends Command
             }
 
 
-            $pdo = $this->databaseAdapter->connectToHost(
-                $urlParser->getDbScheme($this->databaseURL),
-                $urlParser->getDbHost($this->databaseURL),
+            /** @var PDO $pdo */
+            $pdo = $databaseAdapter->connectToHost(
+                $urlParser->getDbScheme($databaseUrl),
+                $urlParser->getDbHost($databaseUrl),
                 $this->privilegedDbUser,
                 $this->privilegedDbPassword
             );
 
-            $database = $urlParser->getDbName($this->databaseURL);
-            $historyDatabase = $urlParser->getDbName($this->databaseURL).'_history';
+            $databaseAdapter->createDb($pdo, $databaseName);
 
-            $this->databaseAdapter->createDb($pdo, $database);
-            $this->databaseAdapter->createDb($pdo, $historyDatabase);
+            $databaseAdapter->createDbUser($pdo, $urlParser->getDbUser($databaseUrl), $urlParser->getDbPassword($databaseUrl));
 
-            $this->databaseAdapter->createDbUser($pdo, $urlParser->getDbUser($this->databaseURL), $urlParser->getDbPassword($this->databaseURL));
+            $permissions = $input->getOption('permissions');
 
-            $this->databaseAdapter->grantDbPermissions($pdo, $urlParser->getDbUser($this->databaseURL), $database);
-            $this->databaseAdapter->grantDbSelectOnlyPermissions($pdo, $urlParser->getDbUser($this->databaseURL), $historyDatabase);
-
-//            $this->createSchema($pdo);
-
-//            $this->resetPermissions($pdo);
+            switch ($permissions) {
+                case 'application':
+                    $databaseAdapter->grantDbApplicationPermissions($pdo, $urlParser->getDbUser($databaseUrl), $databaseName);
+                    break;
+                case 'history':
+                    $databaseAdapter->grantDbHistoryPermissions($pdo, $urlParser->getDbUser($databaseUrl), $databaseName);
+                    break;
+                default:
+                    throw new DatabaseException('Unknown Database Permission');
+            }
 
             $output->writeln("Database Created ...");
 

@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace JStormes\dbTool\CommandLine\Command;
 
-use Database\AdapterInterface;
-use Doctrine\ORM\EntityManager;
+use JStormes\dbTool\Adapter\AdapterFactory;
 use Interop\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Exception;
@@ -29,7 +28,7 @@ class CreateHistoryTableCommandFactory
         $entityManager = null;
         try {
             /** @var EntityManager $entityManager */
-            $entityManager = $container->get(EntityManager::class);
+//            $entityManager = $container->get(EntityManager::class);
         }
         catch (\Exception $ex)
         {
@@ -43,12 +42,12 @@ class CreateHistoryTableCommandFactory
             }
         }
 
-        $databaseAdapter = $container->get(AdapterInterface::class);
+        $databaseAdapterFactory = $container->get(AdapterFactory::class);
 
         $rootDbUser = getenv('PMA_USER');
         $rootDbPassword = getenv('PMA_PASSWORD');
 
-        return new CreateHistoryTableCommand($logger, $entityManager, $connectionString, $databaseAdapter, $rootDbUser, $rootDbPassword);
+        return new CreateHistoryTableCommand($logger, $connectionString, $databaseAdapterFactory, $rootDbUser, $rootDbPassword);
     }
 
 }

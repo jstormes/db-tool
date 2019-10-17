@@ -19,11 +19,9 @@ interface AdapterInterface
 
     function createDbUser(PDO $pdo, string $user, string $password);
 
-    function grantDbPermissions(PDO $pdo, string $user, string $databaseName);
+    function grantDbApplicationPermissions(PDO $pdo, string $user, string $databaseName);
 
-    function grantDbSelectOnlyPermissions(PDO $pdo, string $user, string $databaseName);
-
-
+    function grantDbHistoryPermissions(PDO $pdo, string $user, string $databaseName);
 
     function getDbTables(PDO $pdo, ?string $databaseName=null);
 

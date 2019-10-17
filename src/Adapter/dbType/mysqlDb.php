@@ -93,7 +93,7 @@ class mysqlDb implements AdapterInterface
 
     }
 
-    function grantDbPermissions(PDO $pdo, string $user, string $databaseName)
+    function grantDbApplicationPermissions(PDO $pdo, string $user, string $databaseName)
     {
         $this->checkIfSqlSafe($databaseName);
 
@@ -106,7 +106,7 @@ class mysqlDb implements AdapterInterface
         $query->execute();
     }
 
-    function grantDbSelectOnlyPermissions(PDO $pdo, string $user, string $databaseName)
+    function grantDbHistoryPermissions(PDO $pdo, string $user, string $databaseName)
     {
         $this->checkIfSqlSafe($databaseName);
 

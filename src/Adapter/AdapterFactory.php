@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace JStormes\dbTool\Adapter;
 
 use Interop\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use dbType\mysqlDb;
-use dbType\mariaDb;
+use JStormes\dbTool\Adapter\dbType\mysqlDb;
+use JStormes\dbTool\Adapter\dbType\mariaDb;
 use JStormes\dbTool\Lib\parseDatabaseURL;
+use JStormes\dbTool\Exception\DatabaseException;
 
 
 class AdapterFactory
@@ -16,30 +16,27 @@ class AdapterFactory
 
     public function __invoke(ContainerInterface $container)
     {
-        /** @var LoggerInterface $logger */
-        $logger = $container->get(LoggerInterface::class);
+        return $this;
+    }
 
-        $config = $container->get('config');
-        $databaseUrl = $config['doctrine']['connection']['orm_default']['params']['url'];
-
+    public function getAdapter($databaseUrl)
+    {
         $urlParser = new parseDatabaseURL();
 
         $scheme = $urlParser->getDbScheme($databaseUrl);
 
         switch ($scheme) {
             case "mysql":
-                $adapter = new \JStormes\dbTool\Adapter\dbType\mysqlDb();
+                $adapter = new mysqlDb();
                 break;
             case "maria":
                 $adapter = new mariaDb();
                 break;
             default:
-                $logger->critical("Adapter $scheme not found.");
                 throw new DatabaseException("Adapter $scheme not found.");
         }
 
         return $adapter;
-
     }
 
 }

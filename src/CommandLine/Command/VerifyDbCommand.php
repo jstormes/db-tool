@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JStormes\dbTool\CommandLine\Command;
 
+use JStormes\dbTool\Adapter\AdapterFactory;
 use JStormes\dbTool\Adapter\AdapterInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -20,7 +21,7 @@ class VerifyDbCommand extends Command
     /** @var String  */
     private $databaseURL;
 
-    /** @var AdapterInterface  */
+    /** @var AdapterFactory  */
     private $databaseAdapter;
 
     /**
@@ -28,15 +29,15 @@ class VerifyDbCommand extends Command
      * @param LoggerInterface $logger
      * @param EntityManager $entityManager|null
      * @param String $databaseURL
-     * @param AdapterInterface $databaseAdapter
+     * @param AdapterInterface $databaseAdapterFactory
      */
-    public function __construct(LoggerInterface $logger, String $databaseURL, AdapterInterface $databaseAdapter)
+    public function __construct(LoggerInterface $logger, String $databaseURL, AdapterFactory $databaseAdapterFactory)
     {
         $this->logger = $logger;
 
         $this->databaseURL = $databaseURL;
 
-        $this->databaseAdapter = $databaseAdapter;
+        $this->databaseAdapter = $databaseAdapterFactory;
 
         parent::__construct();
     }

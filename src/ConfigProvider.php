@@ -39,11 +39,11 @@ class ConfigProvider
             'invokables' => [
             ],
             'factories'  => [
-                Adapter\AdapterInterface::class => Adapter\AdapterFactory::class,
+                Adapter\AdapterFactory::class => Adapter\AdapterFactory::class,
                 CommandLine\Command\VerifyDbCommand::class => CommandLine\Command\VerifyDbCommandFactory::class,
                 LoggerInterface::class => Log\Factory\LogFactory::class,
-//                Command\CreateDbCommand::class => Command\CreateDbCommandFactory::class,
-//                Command\CreateHistoryTableCommand::class => Command\CreateHistoryTableCommandFactory::class
+                CommandLine\Command\CreateDbCommand::class => CommandLine\Command\CreateDbCommandFactory::class,
+                CommandLine\Command\CreateHistoryTableCommand::class => CommandLine\Command\CreateHistoryTableCommandFactory::class
             ],
         ];
     }
@@ -53,8 +53,8 @@ class ConfigProvider
         return [
             'commands' => [
                 CommandLine\Command\VerifyDbCommand::class,
-//                Command\CreateDbCommand::class,
-//                Command\CreateHistoryTableCommand::class
+                CommandLine\Command\CreateDbCommand::class,
+                CommandLine\Command\CreateHistoryTableCommand::class
             ],
         ];
     }

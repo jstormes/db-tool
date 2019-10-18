@@ -6,9 +6,12 @@ namespace JStormes\dbTool\CommandLine\Command;
 
 use JStormes\dbTool\Adapter\AdapterFactory;
 use JStormes\dbTool\Adapter\AdapterInterface;
+use JStormes\dbTool\Lib\parseDatabaseURL;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use PDO;
 use Exception;
@@ -22,7 +25,7 @@ class VerifyDbCommand extends Command
     private $databaseURL;
 
     /** @var AdapterFactory  */
-    private $databaseAdapter;
+    private $databaseAdapterFactory;
 
     /**
      * TestDbCommand Constructor.
@@ -31,13 +34,11 @@ class VerifyDbCommand extends Command
      * @param String $databaseURL
      * @param AdapterInterface $databaseAdapterFactory
      */
-    public function __construct(LoggerInterface $logger, String $databaseURL, AdapterFactory $databaseAdapterFactory)
+    public function __construct(LoggerInterface $logger, AdapterFactory $databaseAdapterFactory)
     {
         $this->logger = $logger;
 
-        $this->databaseURL = $databaseURL;
-
-        $this->databaseAdapter = $databaseAdapterFactory;
+        $this->databaseAdapterFactory = $databaseAdapterFactory;
 
         parent::__construct();
     }
@@ -47,8 +48,17 @@ class VerifyDbCommand extends Command
      */
     protected function configure()
     {
-        $this->setName('verify-db')
+        $this->setName('connect-db')
             ->setDescription('Verify Database is reachable.');
+
+        $this->addArgument('database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with Database URL');
+        $this->addOption(
+            'permissions',
+            'p',
+            InputOption::VALUE_OPTIONAL,
+            'access type (application | history)',
+            'application'
+        );
     }
 
     /**
@@ -57,12 +67,25 @@ class VerifyDbCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            $output->writeln("Checking Database  ...");
+
+            $databaseUrl = $input->getArgument('database_url');
+
+            if (!(empty(getenv($databaseUrl)))) {
+                $databaseUrl = getenv($databaseUrl);
+            }
+
+            $urlParser = new parseDatabaseURL();
+
+            $databaseName = $urlParser->getDbName($databaseUrl);
+
+            $output->writeln("Checking Database {$databaseName}...");
+
+            $databaseAdapter = $this->databaseAdapterFactory->getAdapter($databaseUrl);
 
             /** @var PDO $pdo */
-            $pdo = $this->databaseAdapter->connectToDatabase($this->databaseURL);
+            $pdo = $databaseAdapter->connectToDatabase($databaseUrl);
 
-            $tables = $this->databaseAdapter->getDbTables($pdo);
+            $tables = $databaseAdapter->getDbTables($pdo);
 
             if (count($tables)==0) {
                 $this->logger->info("No tables found.");

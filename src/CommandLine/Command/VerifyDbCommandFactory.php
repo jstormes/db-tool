@@ -16,16 +16,9 @@ class VerifyDbCommandFactory
         /** @var LoggerInterface $logger */
         $logger = $container->get(LoggerInterface::class);
 
-        $config = $container->get('config');
-        $databaseUrl = $config['doctrine']['connection']['orm_default']['params']['url'];
-        if (empty($databaseUrl)) {
-            $logger->critical('Config option [\'doctrine\'][\'connection\'][\'orm_default\'][\'params\'][\'url\'] is empty.');
-            throw new Exception('Config option [\'doctrine\'][\'connection\'][\'orm_default\'][\'params\'][\'url\'] is empty.');
-        }
-
         $databaseAdapterFactory = $container->get(AdapterFactory::class);
 
-        return new VerifyDbCommand($logger, $databaseUrl, $databaseAdapterFactory);
+        return new VerifyDbCommand($logger, $databaseAdapterFactory);
     }
 
 }

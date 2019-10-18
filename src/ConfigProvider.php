@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JStormes\dbTool;
 
 
-
 use Psr\Log\LoggerInterface;
 
 /**
@@ -39,9 +38,9 @@ class ConfigProvider
             'invokables' => [
             ],
             'factories'  => [
+                LoggerInterface::class => Log\Factory\LogFactory::class,
                 Adapter\AdapterFactory::class => Adapter\AdapterFactory::class,
                 CommandLine\Command\VerifyDbCommand::class => CommandLine\Command\VerifyDbCommandFactory::class,
-                LoggerInterface::class => Log\Factory\LogFactory::class,
                 CommandLine\Command\CreateDbCommand::class => CommandLine\Command\CreateDbCommandFactory::class,
                 CommandLine\Command\CreateHistoryTableCommand::class => CommandLine\Command\CreateHistoryTableCommandFactory::class
             ],

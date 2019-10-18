@@ -22,11 +22,8 @@ class CreateHistoryTableCommand extends Command
     /** @var LoggerInterface  */
     private $logger;
 
-    /** @var String  */
-    private $databaseURL;
-
     /** @var AdapterInterface  */
-    private $databaseAdapter;
+    private $databaseAdapterFactory;
 
     /** @var string */
     private $privilegedDbUser;
@@ -43,16 +40,13 @@ class CreateHistoryTableCommand extends Command
      * @param string $privilegedDbPassword
      */
     public function __construct(LoggerInterface $logger,
-                                String $databaseURL,
                                 AdapterFactory $databaseAdapterFactory,
                                 string $privilegedDbUser = '',
                                 string $privilegedDbPassword = '')
     {
         $this->logger = $logger;
 
-        $this->databaseURL = $databaseURL;
-
-        $this->databaseAdapter = $databaseAdapterFactory;
+        $this->databaseAdapterFactory = $databaseAdapterFactory;
 
         $this->privilegedDbUser = $privilegedDbUser;
 
@@ -69,6 +63,8 @@ class CreateHistoryTableCommand extends Command
         $this->setName('create-history-table')
             ->setDescription('Create History Table from existing table');
 
+        $this->addArgument('database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with Database URL');
+        $this->addArgument('history_database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with History Database URL');
         $this->addArgument('table_name', InputArgument::REQUIRED, 'Table add history version of');
     }
 
@@ -81,9 +77,25 @@ class CreateHistoryTableCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            $output->writeln("Creating History Table  ...");
+
+            $databaseUrl = $input->getArgument('database_url');
+            if (!(empty(getenv($databaseUrl)))) {
+                $databaseUrl = getenv($databaseUrl);
+            }
+
+            $historyDatabaseUrl = $input->getArgument('history_database_url');
+            if (!(empty(getenv($historyDatabaseUrl)))) {
+                $historyDatabaseUrl = getenv($historyDatabaseUrl);
+            }
+
+            $tableName = $input->getArgument('table_name');
 
             $urlParser = new parseDatabaseURL();
+
+            $databaseName = $urlParser->getDbName($databaseUrl);
+            $historyDatabaseName = $urlParser->getDbName($historyDatabaseUrl);
+
+            $output->writeln("Creating History Table  {$tableName} from database {$databaseName} to {$historyDatabaseName} ...");
 
             if ((empty($this->privilegedDbUser))&&(empty($this->privilegedDbPassword))) {
                 $helper = $this->getHelper('question');
@@ -93,37 +105,33 @@ class CreateHistoryTableCommand extends Command
                 $this->privilegedDbPassword = $helper->ask($input, $output, $usernamePassword);
             }
 
+            $databaseAdapter = $this->databaseAdapterFactory->getAdapter($databaseUrl);
 
             /** @var PDO $pdo */
-            $pdo = $this->databaseAdapter->connectToHost(
-                $urlParser->getDbScheme($this->databaseURL),
-                $urlParser->getDbHost($this->databaseURL),
+            $pdo = $databaseAdapter->connectToHost(
+                $urlParser->getDbScheme($databaseUrl),
+                $urlParser->getDbHost($databaseUrl),
                 $this->privilegedDbUser,
                 $this->privilegedDbPassword,
-                $urlParser->getDbName($this->databaseURL)
+                $urlParser->getDbName($databaseUrl)
             );
 
-            $databaseName = $urlParser->getDbName($this->databaseURL);
-            $historyDatabaseName = $databaseName."_history";
-
-            $tableName = $input->getArgument('table_name');
-
-            $this->logger->notice("Checking that history table {$tableName} is empty.");
-            if ( ! $this->databaseAdapter->isTableEmpty($pdo, $tableName, $historyDatabaseName) ) {
+            $this->logger->notice("Checking that history table {$tableName} on {$historyDatabaseName} is empty.");
+            if ( ! $databaseAdapter->isTableEmpty($pdo, $tableName, $historyDatabaseName) ) {
                 throw new DatabaseException('History Table is not Empty!');
             }
 
             $this->logger->notice("Dropping history table {$tableName}.");
-            $this->databaseAdapter->dropTable($pdo, $historyDatabaseName, $tableName);
+            $databaseAdapter->dropTable($pdo, $historyDatabaseName, $tableName);
 
             $this->logger->notice("Creating history table {$tableName}.");
-            $this->databaseAdapter->createTableFromExistingTable($pdo, $databaseName, $tableName, $historyDatabaseName, $tableName);
+            $databaseAdapter->createTableFromExistingTable($pdo, $databaseName, $tableName, $historyDatabaseName, $tableName);
 
             $this->logger->notice("Adding history columns to table {$tableName}.");
-            $this->databaseAdapter->addHistoryColumns($pdo, $historyDatabaseName, $tableName);
+            $databaseAdapter->addHistoryColumns($pdo, $historyDatabaseName, $tableName);
 
             $this->logger->notice(("Creating Stored Procedure."));
-            $this->databaseAdapter->createHistoryStoredProc($pdo, $databaseName, $tableName, $historyDatabaseName, $tableName);
+            $databaseAdapter->createHistoryStoredProc($pdo, $databaseName, $tableName, $historyDatabaseName, $tableName);
 
             $output->writeln("History Table Created ...");
 

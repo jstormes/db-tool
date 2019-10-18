@@ -28,5 +28,5 @@
             "JStormes\\Dev\\": "test/"
         }
     },
-    "bin": ["src/bin/db-tool"]
+    "bin": ["src/db-tool"]
 }

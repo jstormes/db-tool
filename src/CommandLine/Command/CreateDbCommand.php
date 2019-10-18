@@ -61,7 +61,7 @@ class CreateDbCommand extends Command
     protected function configure()
     {
         $this->setName('create-db')
-            ->setDescription('Create Database');
+            ->setDescription('Create database and set database access permissions');
 
         $this->addArgument('database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with Database URL');
         $this->addOption(

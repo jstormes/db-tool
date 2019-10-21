@@ -61,7 +61,7 @@ class CreateHistoryTableCommand extends Command
     protected function configure()
     {
         $this->setName('create-history-table')
-            ->setDescription('Create History Table from existing table');
+            ->setDescription('Create History Table and Triggers from existing table');
 
         $this->addArgument('database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with Database URL');
         $this->addArgument('history_database_url', InputArgument::REQUIRED, 'Database URL or Environment Variable with History Database URL');

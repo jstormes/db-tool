@@ -197,6 +197,18 @@ class mysqlDb implements AdapterInterface
         $this->checkIfSqlSafe($databaseName);
         $this->checkIfSqlSafe($tableName);
 
+//        ALTER TABLE `user` ADD `type` ENUM('INSERT','UPDATE','DELETE','') NOT NULL AFTER `current_user`;
+
+        $sql = <<< EOT
+            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `type` ENUM('INSERT','UPDATE','DELETE','') NOT NULL;
+        EOT;
+        $pdo->prepare($sql)->execute();
+
+        $sql = <<< EOT
+            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `database_user` TEXT;
+        EOT;
+        $pdo->prepare($sql)->execute();
+
         $sql = <<< EOT
             ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `post_datetime` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ADD INDEX `{$tableName}_post_dt` (`post_datetime`);
         EOT;
@@ -207,10 +219,7 @@ class mysqlDb implements AdapterInterface
         EOT;
         $pdo->prepare($sql)->execute();
 
-        $sql = <<< EOT
-            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `current_user` TEXT;
-        EOT;
-        $pdo->prepare($sql)->execute();
+
 
 
         // ALTER TABLE `user` ADD `type` ENUM('INSERT','UPDATE','DELETE') NOT NULL;
@@ -232,36 +241,54 @@ class mysqlDb implements AdapterInterface
      */
     function createHistoryStoredProc(PDO $pdo, string $databaseName, string $tableName, string $historyDatabaseName, string $historyTableName) : void
     {
-        // UPDATE `user_history` SET `sha_chain` = UNHEX(sha1('cat')) WHERE `user_history`.`history_id` = 1
-        // use sha1 of previous record
-        // https://stackoverflow.com/questions/23348170/mysql-concatenating-all-columns
-
-        // CREATE DEFINER=`root`@`%` TRIGGER `user_history_insert` BEFORE UPDATE ON `user` FOR EACH ROW INSERT INTO user_history SELECT *, null, null FROM user where user.id=id
-
-        // DROP TRIGGER IF EXISTS `user_history_insert`
-
         /**
          * Source table MUST have unique field called "id".
          *
          * TODO: verify this "id" field exists and is unique.
          */
 
+        $this->createInsertTrigger($pdo, $databaseName, $tableName, $historyDatabaseName, $historyTableName);
+        $this->createUpdateTrigger($pdo, $databaseName, $tableName, $historyDatabaseName, $historyTableName);
+        $this->createDeleteTrigger($pdo, $databaseName, $tableName, $historyDatabaseName, $historyTableName);
+    }
+
+    private function createInsertTrigger(PDO $pdo, string $databaseName, string $tableName, string $historyDatabaseName, string $historyTableName)
+    {
+        $sql = <<< EOT
+            DROP TRIGGER IF EXISTS `{$databaseName}`.`{$tableName}_history_insert`
+        EOT;
+        $pdo->prepare($sql)->execute();
+
+        $sql = <<< EOT
+            CREATE DEFINER=`root`@`%` TRIGGER `{$databaseName}`.`{$tableName}_history_insert` AFTER INSERT ON `{$databaseName}`.`{$tableName}` FOR EACH ROW INSERT INTO `{$historyDatabaseName}`.`{$historyTableName}` SELECT *, 'INSERT', USER(), null, null FROM `{$databaseName}`.`{$tableName}` where  `{$databaseName}`.`{$tableName}`.id=NEW.id
+        EOT;
+        $pdo->prepare($sql)->execute();
+    }
+
+    private function createUpdateTrigger(PDO $pdo, string $databaseName, string $tableName, string $historyDatabaseName, string $historyTableName)
+    {
         $sql = <<< EOT
             DROP TRIGGER IF EXISTS `{$databaseName}`.`{$tableName}_history_update`
         EOT;
         $pdo->prepare($sql)->execute();
 
         $sql = <<< EOT
-            CREATE DEFINER=`root`@`%` TRIGGER `{$databaseName}`.`{$tableName}_history_update` BEFORE UPDATE ON `{$databaseName}`.`{$tableName}` FOR EACH ROW INSERT INTO `{$historyDatabaseName}`.`{$historyTableName}` SELECT *, null, null, USER() FROM `{$databaseName}`.`{$tableName}` where  `{$databaseName}`.`{$tableName}`.id=id
+            CREATE DEFINER=`root`@`%` TRIGGER `{$databaseName}`.`{$tableName}_history_update` AFTER UPDATE ON `{$databaseName}`.`{$tableName}` FOR EACH ROW INSERT INTO `{$historyDatabaseName}`.`{$historyTableName}` SELECT *, 'UPDATE', USER(), null, null FROM `{$databaseName}`.`{$tableName}` where  `{$databaseName}`.`{$tableName}`.id=NEW.id
+        EOT;
+        $pdo->prepare($sql)->execute();
+    }
+
+    private function createDeleteTrigger(PDO $pdo, string $databaseName, string $tableName, string $historyDatabaseName, string $historyTableName)
+    {
+        $sql = <<< EOT
+            DROP TRIGGER IF EXISTS `{$databaseName}`.`{$tableName}_history_delete`
         EOT;
         $pdo->prepare($sql)->execute();
 
-        /**
-         * Should have trigger for create and delete as well
-         *
-         * TODO: add create and delete trigger.
-         */
-
+        $sql = <<< EOT
+            CREATE DEFINER=`root`@`%` TRIGGER `{$databaseName}`.`{$tableName}_history_delete` BEFORE DELETE ON `{$databaseName}`.`{$tableName}` FOR EACH ROW INSERT INTO `{$historyDatabaseName}`.`{$historyTableName}` SELECT *, 'DELETE', USER(), null, null FROM `{$databaseName}`.`{$tableName}` where  `{$databaseName}`.`{$tableName}`.id=OLD.id
+        EOT;
+        $pdo->prepare($sql)->execute();
     }
 
     function setReadOnlyPermission(PDO $pdo, string $databaseName, string $readOnlyUser) : void

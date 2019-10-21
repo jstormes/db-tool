@@ -111,7 +111,7 @@ class mysqlDb implements AdapterInterface
         $this->checkIfSqlSafe($databaseName);
 
         $sql = <<< EOT
-            GRANT SELECT ON {$databaseName}.* TO :name@'%'
+            GRANT SELECT, TRIGGER ON {$databaseName}.* TO :name@'%'
         EOT;
 
         $query = $pdo->prepare($sql);
@@ -137,7 +137,7 @@ class mysqlDb implements AdapterInterface
         }
 
         $sql = <<< EOT
-            SELECT count(*) FROM {$databaseName}:table_name
+            SELECT count(*) FROM {$databaseName}.:table_name
         EOT;
 
         $query = $pdo->prepare($sql);

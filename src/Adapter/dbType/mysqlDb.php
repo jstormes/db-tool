@@ -197,20 +197,18 @@ class mysqlDb implements AdapterInterface
         $this->checkIfSqlSafe($databaseName);
         $this->checkIfSqlSafe($tableName);
 
-//        ALTER TABLE `user` ADD `type` ENUM('INSERT','UPDATE','DELETE','') NOT NULL AFTER `current_user`;
-
         $sql = <<< EOT
-            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `type` ENUM('INSERT','UPDATE','DELETE','') NOT NULL;
+            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `history_type` ENUM('INSERT','UPDATE','DELETE','') NOT NULL;
         EOT;
         $pdo->prepare($sql)->execute();
 
         $sql = <<< EOT
-            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `database_user` TEXT;
+            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `history_database_user` TEXT;
         EOT;
         $pdo->prepare($sql)->execute();
 
         $sql = <<< EOT
-            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `post_datetime` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ADD INDEX `{$tableName}_post_dt` (`post_datetime`);
+            ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `history_post_datetime` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ADD INDEX `{$tableName}_post_dt` (`history_post_datetime`);
         EOT;
         $pdo->prepare($sql)->execute();
 
@@ -218,11 +216,6 @@ class mysqlDb implements AdapterInterface
             ALTER TABLE `{$databaseName}`.`{$tableName}` ADD `history_id` BIGINT AUTO_INCREMENT, ADD PRIMARY KEY (`history_id`);
         EOT;
         $pdo->prepare($sql)->execute();
-
-
-
-
-        // ALTER TABLE `user` ADD `type` ENUM('INSERT','UPDATE','DELETE') NOT NULL;
     }
 
 
